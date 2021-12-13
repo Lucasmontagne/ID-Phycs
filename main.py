@@ -24,15 +24,13 @@ class WeatherWidget(QWidget):
             lon = QLineEdit("1.4684552")
             lat = float(lat.text())
             lon = float(lon.text())
+            self.m = folium.Map(location=[lat, lon], zoom_start=13)
+            self.data = io.BytesIO()
+            self.m.save(self.data, close_file=False)
+            self.carte = QtWebEngineWidgets.QWebEngineView()
+            self.carte.setHtml(self.data.getvalue().decode())
+            self.layout.addWidget(self.carte)
             self.init = 0
-
-        self.m = folium.Map(location=[lat, lon], zoom_start=13)
-        self.data = io.BytesIO()
-
-        self.m.save(self.data, close_file=False)
-        self.carte = QtWebEngineWidgets.QWebEngineView()
-        self.carte.setHtml(self.data.getvalue().decode())
-        self.layout.addWidget(self.carte)
 
         # Text Zone
         self.lineEditLat = QLineEdit("43.5571085")
@@ -77,22 +75,20 @@ class WeatherWidget(QWidget):
         self.setLayout(self.layout)
 
     def getWeatherInfos(self):
+        # Update labelled infos
         weatherDict = getWeatherInfos(float(self.lineEditLat.text()), float(self.lineEditLon.text()))
+        self.labelCity.setText(weatherDict['name'])
+        self.labelTemp.setText(str(round(weatherDict['main']['temp'] - 273.15, 2)) + " °C")
 
-        lat = self.lineEditLat
-        lon = self.lineEditLon
-        lat = float(lat.text())
-        lon = float(lon.text())
-        print(lat, lon)
+        # Update map
+        lat = float(self.lineEditLat.text())
+        lon = float(self.lineEditLon.text())
         self.m = folium.Map(location=[lat, lon], zoom_start=13)
         self.data = io.BytesIO()
         self.m.save(self.data, close_file=False)
         self.carte = QtWebEngineWidgets.QWebEngineView()
         self.carte.setHtml(self.data.getvalue().decode())
-        
-
-        self.labelCity.setText(weatherDict['name'])
-        self.labelTemp.setText(str(round(weatherDict['main']['temp'] - 273.15, 2)) + " °C")
+        self.layout.replaceWidget(self.layout.itemAt(0).widget(), self.carte)
 
 
 class MainWindow(QMainWindow):
